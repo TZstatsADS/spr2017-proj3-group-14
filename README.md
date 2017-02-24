@@ -7,11 +7,11 @@ Term: Spring 2017
 
 + Team #
 + Team members
-	+ team member 1
-	+ team member 2
-	+ team member 3
-	+ team member 4
-	+ team member 5
+	+ Han, Ke kh2793@columbia.edu
+	+ Li, Mengchen ml3890@columbia.edu
+	+ Mison, Virgile vcm2114@columbia.edu
+	+ Pan, Yijia yp2424@columbia.edu
+	+ Xiang, Yi yx2365@columbia.edu
 
 + Project summary: In this project, we created a classification engine for grayscale images of poodles versus images of fried chickens. 
 	

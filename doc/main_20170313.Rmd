@@ -1,0 +1,129 @@
+---
+title: "Project3: Chicken or Dogs?"
+author: "Group 14"
+date: "March 12, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r,warning=FALSE}
+if(!require("gbm")){
+  install.packages("gbm")
+}
+
+if(!require("data.table")){
+  install.packages("data.table")
+}
+
+library("gbm")
+library("data.table")
+
+source('../lib/cross_validation.R')
+source("../lib/train_GBM.R")
+#source("../lib/train_ADV.R")##Yi: need to be written, very important, uncomment it after you write it.
+```
+
+###Step0: Set directories
+```{r}
+experiment_dir <- "../data/" # This will be modified for different data sets.
+img_train_dir <- paste(experiment_dir, "train/", sep="")
+img_test_dir <- paste(experiment_dir, "test/", sep="")
+```
+
+### Step 1: set up controls for evaluation experiments.
+
+we use some controls for the evaluation experiments. 
+
++ (T/F) cross-validation on the training set
++ (number) K, the number of CV folds
+#+ (T/F) process features for training set
++ (T/F) run evaluation on an independent test set
+
+```{r exp_setup}
+run.cv=TRUE # run cross-validation on the training set
+K <- 5  # number of CV folds
+run.test=TRUE # run evaluation on an independent test set
+```
+
+### Step 2: import training images class labels.
+```{r}
+label_train <- read.table(paste(experiment_dir, "labels.csv", sep=""),
+                          header=T)
+label_train<-as.matrix(label_train)
+
+sift_features<-read.csv("../data/sift_features.csv")
+sift_features<-t(sift_features)
+sift_features<-data.frame(sift_features)
+```
+
+###Step 3: Fit training data into GBM Model, which is our baseline model.
+
+Run Cross Validation on different shrinkage parameters, here we take parameters from 0.1 to 5 step 0.1
+
+```{r,warning=FALSE}
+shrinks<-seq(0.1, 0.5, 0.1)
+#record the test error for GBM with diffrent shrinkage parameters
+test_err_GBM = numeric(length(shrinks))
+for(i in 1:length(shrinks)){
+  cat("GBM model Cross Validation No.", i, "model out of",length(shrinks), "models", "\n")
+
+    paras = list(depth=1,
+             shrinkage=shrinks[i],
+             n.trees=100)
+
+  test_err_GBM[i] = cross_validation(sift_features, label_train, paras=paras, K=5, model='GBM')
+}
+```
+
+
+*Plot the test error
+```{r}
+plot(y=test_err_GBM,x=shrinks,xlab="shrinkages",ylab="CV Test Error",main="GBM CV Test Error")
+```
+
+
+* find the best shrinkage parameters and fit it into GBM Model
+```{r}
+best_shrink = shrinks[which.min(test_err_GBM)]
+paste("The best shrinkage parameter is",best_shrink)
+best_paras = list(depth=1, shrinkage=best_shrink, n.trees=100)
+```
+
+
+* train the model with the entire training set under best parameters
+```{r}
+tm_GBM<-NA
+tm_GBM <- system.time(GBM_fit<-train_GBM(x=sift_features, y=label_train, paras=best_paras))
+```
+
+Interstep:Very Important. This part will be required to do on the class.
+
+Next, we will need to use python process train and test images in order to get CNN features for both Train and Test images. Save CNN features as csv or RData.
+
+Input:train and test images
+Output:CNN features for train and test images
+
+###Step 4: Fit training data into Advanced Model
+Input:load train images' CNN features
+Output: fitted advanced model
+
+###Step 5: Make Prediction
+will use function in "test.R"
+
+GBM:
+Input:sift features for test images (Professor may provide it, I will check with TA)
+Output:0/1
+ADV:
+Input:test images CNN features
+Output:0/1
+
+### Summarize Running Time
+```{r}
+cat("Time for training model=", tm_GBM [1], "s \n")
+```
+
+

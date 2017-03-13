@@ -1,31 +1,48 @@
-########################
-### Cross Validation ###
-########################
+###2017spring_group14
+##################Cross Validation for Model Selection##############################
+####################################################################################
 
-### Author: Yuting Ma
-### Project 3
-### ADS Spring 2016
+# Cross validation function for either the GBM or the advanced model
+
+# INPUT: 
+#     X = features of input images, matrix in images*features format
+#     y = class labels for training images, 0 represent chicken and 1 dogs
+#     K = number of folds used in cv
+#     paras = list of parameter values, passed on directly to training functions
+#     moldel = either 'GBM' or 'ADV' for baseline or advanced model
 
 
-cv.function <- function(X.train, y.train, d, K){
+# OUTPUT: mean test error over all folds
+
+cross_validation = function(x=sift_features, y=label_train, paras=NULL, K=5, model='GBM'){
+
   
-  n <- length(y.train)
-  n.fold <- floor(n/K)
-  s <- sample(rep(1:K, c(rep(n.fold, K-1), n-(K-1)*n.fold)))  
-  cv.error <- rep(NA, K)
+  source("../lib/train_GBM.R")
+  #source("./lib/train_ADV.R") ##?????????,???????????????train_ADV.R
+  source("../lib/test.R")
+  
+  n = as.numeric(length(y))
+  n.fold = floor(n/K)
+  s = sample(rep(1:K, c(rep(n.fold, K-1), n-(K-1)*n.fold)))  
+  cv.error = rep(NA, K)
   
   for (i in 1:K){
-    train.data <- X.train[s != i,]
-    train.label <- y.train[s != i]
-    test.data <- X.train[s == i,]
-    test.label <- y.train[s == i]
+    train.data = x[s != i,]
+    train.label = y[s != i]
+    test.data = x[s == i,]
+    test.label = y[s == i]
     
-    par <- list(depth=d)
-    fit <- train(train.data, train.label, par)
-    pred <- test(fit, test.data)  
-    cv.error[i] <- mean(pred != test.label)  
+    fit = switch(model,
+                 GBM = train_GBM(train.data, train.label, paras),
+                 ADV = train_ADV(train.data, train.label, paras)
+    )
+    
+    pred = test(fit, test.data)  
+    
+    cv.error[i] = mean(pred != test.label) 
     
   }			
-  return(c(mean(cv.error),sd(cv.error)))
+  
+  return(mean(cv.error))
   
 }

@@ -1,26 +1,33 @@
+###2017spring_group14
 ######################################################
 ### Fit the classification model with testing data ###
 ######################################################
 
-### Author: Yuting Ma
-### Project 3
-### ADS Spring 2016
 
-test <- function(fit_train, dat_test){
+test = function(fit_train, dat_test){
+  # Fit the classfication model with testing data
+  # INPUT: 
+  #     fit_train = trained model object, either gbm or xgb.Booster
+  #     dat_test = processed features from testing images 
+  #
+  # OUTPUT: training model specification
   
-  ### Fit the classfication model with testing data
+  library('gbm')
+
   
-  ### Input: 
-  ###  - the fitted classification model using training data
-  ###  -  processed features from testing images 
-  ### Output: training model specification
-  
-  ### load libraries
-  library("gbm")
-  
-  pred <- predict(fit_train$fit, newdata=dat_test, 
-                  n.trees=fit_train$iter, type="response")
-  
+  pred = switch(class(fit_train), 
+                gbm = predict(fit_train, 
+                              newdata = dat_test, 
+                              n.trees = fit_train$n.trees, 
+                              type="response")
+                ##?????????advance method ?????????????????????
+                # ,
+                
+                # xgb.Booster = predict(fit_train, 
+                #                       newdata = dat_test)
+  )
+
+
   return(as.numeric(pred> 0.5))
 }
 

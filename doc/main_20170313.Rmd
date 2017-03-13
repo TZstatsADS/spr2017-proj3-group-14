@@ -55,9 +55,9 @@ label_train <- read.table(paste(experiment_dir, "labels.csv", sep=""),
                           header=T)
 label_train<-as.matrix(label_train)
 
-sift_features<-read.csv("../data/sift_features.csv")
-sift_features<-t(sift_features)
-sift_features<-data.frame(sift_features)
+sift_features_train<-read.csv("../data/sift_features.csv")
+sift_features_train<-t(sift_features_train)
+sift_features_train<-data.frame(sift_features_train)
 ```
 
 ###Step 3: Fit training data into GBM Model, which is our baseline model.
@@ -75,7 +75,7 @@ for(i in 1:length(shrinks)){
              shrinkage=shrinks[i],
              n.trees=100)
 
-  test_err_GBM[i] = cross_validation(sift_features, label_train, paras=paras, K=5, model='GBM')
+  test_err_GBM[i] = cross_validation(sift_features_train, label_train, paras=paras, K=5, model='GBM')
 }
 ```
 
@@ -97,7 +97,7 @@ best_paras = list(depth=1, shrinkage=best_shrink, n.trees=100)
 * train the model with the entire training set under best parameters
 ```{r}
 tm_GBM<-NA
-tm_GBM <- system.time(GBM_fit<-train_GBM(x=sift_features, y=label_train, paras=best_paras))
+tm_GBM <- system.time(GBM_fit<-train_GBM(x=sift_features_train, y=label_train, paras=best_paras))
 ```
 
 Interstep:Very Important. This part will be required to do on the class.

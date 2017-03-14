@@ -1,0 +1,285 @@
+---
+title: "models summary after feature extractions"
+author: "Mengchen li"
+date: "3/13/2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# read features and labels
+```{r}
+features=read.csv('/Users/limengchen/Desktop/spr2017-proj3-group-14-master/data/training_data/sift_features/sift_features.csv')
+labels=read.csv('/Users/limengchen/Desktop/spr2017-proj3-group-14-master/data/training_data/labels.csv')
+# you need to use your own path!!
+```
+
+## Model 1 : SVM
+```{r,warning=FALSE}
+# install and load package
+install.packages('e1071')
+library(e1071)
+
+# load CNN feature data  important!!!
+load('~/spr2017-proj3-group-14-master/CNN_feature.RData')
+train.SVM=cbind(features, CNN_feature)
+
+# functions for accuracy of models
+# k=5 for cross validation
+cross_validation_SVM = function(features, labels, k, p){
+  dat=data.frame(x=features, y=as.factor(as.matrix(labels)))
+  
+  accuracy=vector()
+  m=dim(dat)[2]
+  n=2000/k
+  
+  index=list()
+  for(i in 1:k){
+    index[[i]]=seq(i, 2000, k)
+  }
+  
+  for(i in 1:k){
+    index=index[[i]]
+    # create train and test data set
+    train_data=dat[-index,]
+    test_data=data[index,]
+    
+    temp=dat[-index, -m]
+    index2=which(colSums(temp)==0)
+    
+    train_data=train_data[,-c(index2)] # with labels
+    test_data=test_data[, -c(index2)] # without labels
+    test_label=test_data[,m]
+    test_data=test_data[,-m]
+    
+    svm.linear=svm(y~., data=train_data, kernel='linear', cost=p, scale=T)
+    r.svm=predict(scm.linear, test_data)
+    
+    accuracy[i]=mean(svm.linear, test_label)
+  }
+  return(mean(accuracy))
+}
+
+# create model
+model.SVM=function(features, labels){
+  k=5
+  p=c(0.0001, 0.001, 0.01)
+  Acc.svm=vector()
+  j=1
+  
+  # main loop for accuracy calculations
+  for(i in p){
+    Acc.svm[j]=cross_validation_SVM(features, labels, k, i)
+    j=j+1
+  }
+  
+  Ind.svm=which.min(Acc.svm)
+  print(Acc.svm[Ind.svm])
+  final.p.svm=p[Ind.svm]
+  print(final.p.svm)
+  
+  dat.SVM=data.frame(x=features, y=as.factor(as.matrix(labels)))
+  temp.svm=dat.SVM[, -dim(dat.SVM)[2]]
+  Index3=which(colSums(temp)==0)
+  print(Index3)
+  
+  dat.SVM=dat.SVM[,-C(Index3)]
+  model=svm(y~., data=dat.SVM, kernel='linear', cost=final.p, scale=T)
+  return(model)
+}
+
+# running time information
+system.time(model.SVM(train.SVM, labels))
+
+# test data codes
+model.svm= model.SVM(train.SVM, labels)
+r.svm=predict(mdoel, testdata) # name testdata
+```
+
+
+## Model 2 : randomForest
+```{r}
+# install and load library
+install.packages('randomForest')
+install.packages('MASS')
+library(randomForest)
+library(MASS)
+
+# train function 
+train.rf = function(data_train, label_train){
+  
+  # functions for accuracy of models
+  cross_validation_rf=function(features, labels, k, p){
+    data_rf=cbind(features, labels)
+    
+    accuracy_rf=vector()
+    n=2000/k
+    index=list()
+    
+    for(i in 1:k) {
+      index[[i]]=seq(i, 2000, k)
+    }
+    
+    for(i in 1:k){
+      index=index[[i]]
+      
+      # create train and test data set
+      train_data=data_randomForest[-index,]
+      test_data=data_randomForest[index,]
+      test_label=labels[index]
+      fit.rf=randomForest(labels~., data=train_data, ntry=2, ntree=p,
+                          importance=TRUE, o.trace=100)
+      
+      r.rf=predict(fit.rf, test_data, OBB=TRUE, type='response')
+      # if randomForest > 0.5, then it is dogs; otherwise it is chicken
+      r.rf[which(r.rf > 0.5)] = 1
+      r.rf[which(r.rf <= 0.5)] = 0
+      
+      accuracy_rf[i]=mean(r.rf==test_label)
+    }
+    return(mean(accuracy_randomForest))
+  }
+  
+  # create model
+  model.rf=function(features, labels) {
+    k=5
+    p=c(400,500,600)
+    Acc.rf=vector()
+    j=j+1
+  }
+  
+  for(i in p){
+    Acc.rf[j]=cross_validation_rf(features, labels, k, i)
+    j=j+1
+  }
+  index.rf=which.min(Acc.rf)
+  print(Acc.rf[index.rf])
+  final.p.rf=p[index.rf]
+  dat.rf=data.frame(x=features, y=as.factor(as.matrix(labels)))
+  model.rf=randomForest(y~., data=dat.rf, mtry=2, ntree=final.p.rf,
+                        importance=TRUE, o.trace=100)
+  return(model.rf)
+}
+
+# running time information
+system.time(model.rf(data_rf, labels))
+
+# test data codes
+test.rf=function(fit_train, testdata){
+  rf.preds=predict(fit.rf, test, OBB=TRUE, type='response')
+  rf.preds[which(rf.pres > 0.5)] = 1
+  rf.preds[which(rf.preds <= 0.5)] = 0
+  
+  return(rf.preds)
+}
+```
+
+
+## Model 3 : xgboost
+```{r}
+# install and load package
+install.packages('xgboost')
+library(xgboost)
+
+# load CNN feature data  important!!!
+load('~/spr2017-proj3-group-14-master/CNN_feature.RData')
+train.xg=cbind(features, CNN_feature)
+
+# function for train data set
+train.xg=function(data_train, label_train){
+  
+  # set initial depth is 5
+  depth=5
+  err.cv=c()
+  
+  # loop for err.cv
+  for(i in 1: depth){
+    fit.cv=xgb.cv(data=train_data, label=train_label, max.depth=i, eta=1, nround=50,
+                  objective='binary:logistic', nfold = 5)
+    err.cv=c(err.cv, fit.cv$test.error.mean)
+  }
+  
+  # find the best depth for min err.cv
+  depth.best=which.min(err.cv)
+  
+  # create model
+  model.xg=xgboost(train_data, train_label, max.depth=3, eta=1, nround=50,
+                   objective='binary:logistic')
+  return(model.xg=model.xg)
+}
+
+# running time information
+system.time(model.xg(train.xg, labels))
+
+# test data codes
+test.xg=function(fit_train, testdata){
+  xg.preds=predict(fit_train, testdata)
+  return(xg.preds)
+}
+```
+
+
+## Model 4 : tree
+```{r}
+# install and load package
+install.packages('rpart')
+library(rpart)
+
+# load CNN feature data  important!!!
+load('~/spr2017-proj3-group-14-master/CNN_feature.RData')
+train.tree=cbind(features, CNN_feature)
+
+# create model
+model.tree=function(data_train, label_train){
+  mycontrol=rpart.control(cp=0, xval=5)
+  fittree=rpart(label_train ~ data_train, method='class', control = mycontrol)
+  cptarg=fittree$cptable[which(fittree$cptable[,4]==min(fittree$cptable[,4])), 1]
+  
+  # find the best tree model
+  prunedtree=prune(fittree, cp=cptarg)
+  return(prunedtree)
+}
+
+# running time information
+system.time(model.tree(train.tree, labels))
+
+# test data codes
+test.tree=function(fit_train, testdata){
+  tree.preds=predict(fit_train, newdata=testdata, type='class')
+  return(tree.preds)
+}
+```
+
+
+## Model 5 : Logestic Regression
+```{r}
+# install and load package
+install.packages('sgd')
+library(sgd)
+
+# load CNN feature data  important!!!
+load('~/spr2017-proj3-group-14-master/CNN_feature.RData')
+train.lr=cbind(features, CNN_feature)
+
+# create model
+model.lr=function(data_train, label_train){
+  fit.lr=sgd(data_train, lebel_train, model='glm',
+  model.contrl=binomial(link='logit'))
+  
+  return(fit.lr)
+}
+
+# running time information
+system.time(model.lr(train.lr, labels))
+
+# test data codes
+test.lr=function(fit.lr, testdata){
+  lr.preds = predict(fit.lr, testdata, type='response')
+  
+  return(as.numeric(lr.preds>0.5))
+}
+```
+

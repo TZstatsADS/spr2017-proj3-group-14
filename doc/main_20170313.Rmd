@@ -55,7 +55,7 @@ label_train <- read.table(paste(experiment_dir, "labels.csv", sep=""),
                           header=T)
 label_train<-as.matrix(label_train)
 
-sift_features_train<-read.csv("../data/sift_features.csv")
+sift_features_train<-read.csv("../data/sift_features.csv") #training sift features
 sift_features_train<-t(sift_features_train)
 sift_features_train<-data.frame(sift_features_train)
 ```
@@ -117,6 +117,8 @@ will use function in "test.R"
 GBM:
 Input:sift features for test images (Professor may provide it, I will check with TA)
 Output:0/1
+Also accuracy of the prediction
+
 ADV:
 Input:test images CNN features
 Output:0/1

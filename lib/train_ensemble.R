@@ -7,7 +7,9 @@
 #   4.Random forest is okay here, theoratical okay & error okay
 # ensamble learning to get the good result based on traditional mahine learning
 # Traditional machine learning - I mean not deep learning KE HAN
-
+#library
+library(caret)
+library(sgd)
 #load data
 features=read.csv(file.choose())
 labels=read.csv(file.choose())
@@ -78,9 +80,9 @@ cv.function <- function(data, label, K){
     test.label <- label[fold[,i],]
     train.label <- label[-fold[,i],]
     
-    par <- list(depth = d, Ntrees = n, Shrinkage = r)
-    fit <- train.logit (dat_train, label_train)
-    pred <- test.ada(fit, test.data)  
+    #par <- list(depth = d, Ntrees = n, Shrinkage = r)
+    fit <- train.logit (train.data, train.label)
+    pred <- test.logistic(fit, test.data)  
     cv.error[i] <- mean(pred != test.label)
   }
   
@@ -195,7 +197,11 @@ train.logit <- function(dat_train, label_train){
   return(fit)
 }
 
-
+test.logistic <- function(fit, dat_test){
+  pred <- predict(fit, dat_test,type = 'response')  
+  
+  return(as.numeric(pred> 0.5))
+}
 # choose the best for further analysis, ensemble+
 
 #average for logistic regression
@@ -232,4 +238,6 @@ lm_predictions<-predict(lm_fit,newdata=testing)
 predictions<-ifelse((lm_predictions+rf_predictions)/2>0.5,1,0)
 error<-(sum(testing$V1!=predictions))/nrow(testing)
 error
+
+
 

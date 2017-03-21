@@ -100,11 +100,8 @@ pred_accuracy # pred_accuracy=0.73
 set.seed(2)
 source('../lib/cross_validation_svm.R')
 source('../lib/train_SVM.R')
-# combine labels with features
-all_data<-data.frame(mylabels,sift_features_all)
-positions <- sample(nrow(all_data),size=floor((nrow(all_data)/4)*3))
-training<- all_data[positions,] # 1500 training data set
-testing<- all_data[-positions,] # 500 testing data set
+### Run Cross Validation on different tolerance parameters
+# we take parameters from 0.001 to 0.01 step 0.1
 
 ### run cross validation on different cost parameters
 tolerance<-seq(0.001,0.1,0.01)
@@ -137,9 +134,9 @@ best_paras = paras = list(degree=3,
 best_paras 
 
 ### running time
-tm_GBM<-NA
-tm_GBM <- system.time(SVM_fit<-train_SVM(x=sift_features_train, y=label_train, paras=best_paras))
-tm_GBM # 
+tm_SVM<-NA
+tm_SVM <- system.time(SVM_fit<-train_SVM(x=sift_features_train, y=label_train, paras=best_paras))
+tm_SVM # 
 
 ### Fit test sift features into trained SVM model and predict the results
 source('../lib/test_svm.R')
@@ -149,23 +146,7 @@ pred_SVM<-test_svm(SVM_fit,sift_features_test)
 write.csv(pred_SVM,file="../output/SVM_prediction.csv")
 save(pred_SVM,file="../output/GBM_prediction.Rdata")
 pred_accuracy<-mean(pred_SVM==label_test)
-pred_accuracy # pred_accuracy=0.
-
-
-### Fit SVM model
-svm_fit<-svm(training$V1~.,data=training,tolerance=0.021)
-svm_predictions<-ifelse(predict(svm_fit,newdata=testing)>0,1,0)
-error_svm<-((sum((testing$V1!=svm_predictions)))/nrow(testing))
-
-pred_accuracy_svm=mean(svm_predictions==testing$V1)
-pred_accuracy_svm # 0.51 too low!!!
-
-write.csv(svm_predictions,file="../output/svm_predictions.csv")
-save(pred_GBM,file="../output/svm_predictions.Rdata")
-pred_accuracy<-mean(svm_predictions==label_test)
-
-### running time
-??? # seems quick
+pred_accuracy # pred_accuracy=0.51
 
 ################## Step 3 (2): Advances Model: Random Forest #####################################
 

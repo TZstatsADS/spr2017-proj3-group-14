@@ -9,7 +9,6 @@
 #     y = class labels for training images, 0 represent chicken and 1 dogs
 #     K = number of folds used in cv
 #     paras = list of parameter values, passed on directly to training functions
-#     moldel = either 'GBM' or 'ADV' for baseline or advanced model
 
 
 # OUTPUT: mean test error over all folds
@@ -18,7 +17,6 @@ cross_validation = function(x=sift_features, y=label_train, paras=NULL, K=5, mod
 
   
   source("../lib/train_GBM.R")
-  #source("./lib/train_ADV.R") ##?????????,???????????????train_ADV.R
   source("../lib/test.R")
   
   n = as.numeric(length(y))
@@ -32,10 +30,7 @@ cross_validation = function(x=sift_features, y=label_train, paras=NULL, K=5, mod
     test.data = x[s == i,]
     test.label = y[s == i]
     
-    fit = switch(model,
-                 GBM = train_GBM(train.data, train.label, paras),
-                 ADV = train_ADV(train.data, train.label, paras)
-    )
+    fit=train_GBM(train.data, train.label, paras)
     
     pred = test(fit, test.data)  
     

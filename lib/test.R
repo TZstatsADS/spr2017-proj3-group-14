@@ -14,18 +14,10 @@ test = function(fit_train, dat_test){
   
   library('gbm')
 
-  
-  pred = switch(class(fit_train), 
-                gbm = predict(fit_train, 
-                              newdata = dat_test, 
-                              n.trees = fit_train$n.trees, 
-                              type="response")
-                ##?????????advance method ?????????????????????
-                # ,
-                
-                # xgb.Booster = predict(fit_train, 
-                #                       newdata = dat_test)
-  )
+  pred=predict(fit_train,
+               newdata = dat_test,
+               n.trees = fit_train$n.trees,
+               type="response")
 
 
   return(as.numeric(pred> 0.5))

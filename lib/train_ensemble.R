@@ -282,7 +282,3 @@ cv.function <- function(data, label, K){
   
   return(mean(cv.error))
 }
-
-
-
-

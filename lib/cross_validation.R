@@ -32,6 +32,11 @@ cross_validation = function(x=sift_features, y=label_train, paras=NULL, K=5, mod
     
     fit=train_GBM(train.data, train.label, paras)
     
+    ##this might be useful if you guys decide to use CV in advanced model
+    # fit = switch(model,
+    #              GBM = train_GBM(train.data, train.label, par),
+    #              ADV = train_ADV(train.data, train.label, par)
+    # )
     pred = test(fit, test.data)  
     
     cv.error[i] = mean(pred != test.label) 

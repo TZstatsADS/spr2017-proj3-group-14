@@ -1,0 +1,78 @@
+---
+title: "try!!"
+author: "KE HAN kh2793"
+date: "March 22, 2017"
+output: html_document
+---
+----
+
+
+Use lfda to dimension reduction and svm to predict
+
+```{r}
+library(lfda)
+library(plotly)
+library(MASS)
+library(matrixStats)
+library(caret)
+library(e1071)
+
+sift= fread("sift_features.csv", header= F)
+sift.df= as.data.frame(t(sift))
+
+labels<-read.csv("labels.csv")
+label.train <- as.data.frame(labels)
+names(label.train) <- c("val")
+label.train$val <- as.factor(label.train$val)
+
+data.all = as.data.frame(apply(data.all,2, as.numeric))
+data.all$val = as.factor(data.all$val)
+
+
+#split into training and testing
+set.seed(2)
+train=sample(1:nrow(data.all),nrow(data.all)*0.8)
+test=-train
+dat.train=data.all[train,-1]
+label_test=label.train[test]
+test_data=data.all[test,-1]
+test_label=data.all$V1[test]
+```
+
+```{r, echo=FALSE, out.width=12, fig.align="center", fig.width=12}
+lowVariance <- nearZeroVar(dat.train)
+dat.train.variance <- dat.train[,-lowVariance]
+good.variance.ncol <- ncol(dat.train.variance)
+numcol.to.use <- min(good.variance.ncol, nrow(dat.train.variance))-100
+
+
+fda.model <- lfda(x = dat.train[,1:numcol.to.use], y = label.train, r = numcol.to.use, metric="plain")
+Z <- as.data.frame(fda.model$Z)
+
+```
+
+Error levels of the 10-fold cross validation
+```{r, echo=FALSE}
+z.labeled <- cbind(Z, label.train)
+
+svm.model <- svm(label.train ~ ., 
+                 data = z.labeled,
+                 cross = 10)
+
+svm.model$accuracies
+# [1] 52.500 55.000 49.375 50.000 50.000 47.500 47.500 50.000 51.875 51.875
+```
+
+### 6. SVM over the FDA with just 2 fisher features 
+Error levels of the 10-fold cross validation
+```{r, echo=FALSE}
+z.labeled.fewCols <- cbind(Z[,1:2], label.train)
+
+svm.model.few <- svm( ~ ., 
+                 data = z.labeled.fewCols,
+                 cross = 10)
+
+svm.model.few$accuracies
+#[1] 55.625 50.000 46.250 51.250 47.500 55.000 54.375 50.625 43.125 43.750
+
+```

@@ -101,4 +101,72 @@ svm.model.few$accuracies
 ```
 
 
+#library
+library(adabag)
+
+#load data 
+
+features=read.csv("sift_features.csv")
+labels=read.csv("labels.csv")
+features=t(features)
+
+
+all_data<-data.frame(labels,features)
+all_data$V1=as.factor(all_data$V1)
+dim(all_data)
+
+set.seed(10)
+positions <- sample(nrow(all_data),size=floor((nrow(all_data)/4)*3))
+training<- all_data[positions,]
+testing<- all_data[-positions,]
+
+
+
+#train
+boostingmodel<- boosting(V1 ~ ., data = training, mfinal = 10, control = rpart.control(maxdepth = 1))
+#error
+table(boostingmodel$class, training$V1,dnn = c("Predicted Class", "Observed Class"))
+1 - sum(boostingmodel$class == training$V1) /length(training$V1)
+#0.31
+
+
+#testing error
+pred=predict.boosting(boostingmodel,newdata = testing[,-1])
+sum(testing[,1]!=pred$class)
+#0.338
+
+
+#boosting cv
+boostingcv=boosting.cv(V1 ~ ., v = 10, data = all_data, mfinal = 10,control = rpart.control(maxdepth = 1))
+#0.351 error
+
+
+
+
+#bagging of different methods
+#pred of boosting
+#random forest
+library(randomForest)
+rf_fit<-randomForest(training$V1 ~.,data=training,ntree=500)
+rf_pred=predict(rf_fit,newdata=testing)
+sum(testing[,1]!=rf_pred)/500
+
+#svm all of them are 1!!
+library(e1071)
+svm_fit<-svm(training$V1~.,data=training)
+svm_pred=predict(svm_fit,newdata=testing)
+
+#logit no converge
+lm_fit<-glm(training$V1~.,family=binomial(link='logit'),data=training)
+lm_pred=ifelse(predict(lm_fit,newdata=testing)>-75,1,0)
+
+
+x=data.frame(svm_pred,rf_pred,lm_pred,pred$class,testing[,1])
+write.csv(x,"output.csv")
+xx=data.frame(rf_pred,lm_pred,pred$class)
+#the best can be 0.278
+
+
+
+
 

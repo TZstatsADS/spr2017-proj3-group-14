@@ -113,6 +113,7 @@ features=read.csv("sift_features.csv")
 labels=read.csv("labels.csv")
 features=t(features)
 
+feature
 
 all_data<-data.frame(labels,features)
 all_data$V1=as.factor(all_data$V1)
@@ -131,18 +132,21 @@ boostingmodel<- boosting(V1 ~ ., data = training, mfinal = 10, control = rpart.c
 table(boostingmodel$class, training$V1,dnn = c("Predicted Class", "Observed Class"))
 1 - sum(boostingmodel$class == training$V1) /length(training$V1)
 #0.31
+#0.36
 
 
 #testing error
 pred=predict.boosting(boostingmodel,newdata = testing[,-1])
 sum(testing[,1]!=pred$class)
 #0.338
+#on the lasso feature 0.386
 
 
 #boosting cv
 boostingcv=boosting.cv(V1 ~ ., v = 10, data = all_data, mfinal = 10,control = rpart.control(maxdepth = 1))
+boostingcv
 #0.351 error
-
+# on the lasso feature  0.3845
 
 
 
@@ -151,6 +155,33 @@ boostingcv=boosting.cv(V1 ~ ., v = 10, data = all_data, mfinal = 10,control = rp
 #random forest
 library(randomForest)
 rf_fit<-randomForest(training$V1 ~.,data=training,ntree=500)
+rf_pred=predict(rf_fit,newdata=testing)
+sum(testing[,1]!=rf_pred)/500
+#0.354
+
+#svm all of them are 1!!
+library(e1071)
+svm_fit<-svm(training$V1~.,data=training)
+svm_pred=predict(svm_fit,newdata=testing)
+sum(testing[,1]!=svm_pred)/500
+#0.374
+
+#logit no converge
+lm_fit<-glm(training$V1~.,family=binomial(link='logit'),data=training)
+lm_pred=ifelse(predict(lm_fit,newdata=testing)>-75,1,0)
+sum(testing[,1]!=lm_pred)/500
+#0.498
+
+
+x=data.frame(svm_pred,rf_pred,lm_pred,pred$class,testing[,1])
+write.csv(x,"output.csv")
+xx=data.frame(rf_pred,lm_pred,pred$class)
+#the best can be 0.278
+
+
+
+
+
 rf_pred=predict(rf_fit,newdata=testing)
 sum(testing[,1]!=rf_pred)/500
 

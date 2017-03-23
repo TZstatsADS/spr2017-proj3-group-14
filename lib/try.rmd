@@ -7,6 +7,9 @@ output: html_document
 ----
 
 
+
+
+
 Use lfda to dimension reduction and svm to predict
 
 ```{r}
@@ -76,3 +79,20 @@ svm.model.few$accuracies
 #[1] 55.625 50.000 46.250 51.250 47.500 55.000 54.375 50.625 43.125 43.750
 
 ```
+
+
+
+Also to systematically solve the problem of overfitting:
+*(High dimensionality)
+1. (Variable selection)
+  1.1 (Best subset selection)
+  1.2 (stepwise selection)
+2. (Regularization)
+  2.1 Ridge
+  2.2 LASSO (see attached fig, rule out this method)
+  2.3 SCAD
+  2.4 elastic net
+3. (Dimension reduction techniques) (see attached fig, rule out this method)
+  3.1 (Principal component regression) 
+  3.2 (Factor analysis)
+  3.3 (Partial least squares)

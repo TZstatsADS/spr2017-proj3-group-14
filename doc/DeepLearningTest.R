@@ -10,29 +10,30 @@ img_dir <- "../data/raw_images/"
 source("../lib/annex.R")
 
 set.seed(1)
-n <- 2000
-sizeImg <- 50
-rot <- 1
-n_files <- length(list.files(img_dir))
 # display(getImage(imgs,10,40))  # to show example image from the matrix imgs
 
 ### Load images or re-compile them ###
 
 ## load data to imgs
-load("data1rotAugmentation.RData")
+load("../data/data1rotAugmentation.RData")
 
 ## only if recompile the data from raw images
+#n <- 2000
+#sizeImg <- 50
+#rot <- 1
+#n_files <- length(list.files(img_dir))
 #rand_sample <- sample(1:n_files, n)
 #imgs <- matrixfy_imgs(img_dir, rand_sample, n, sizeImg, sizeImg, rot=rot)
 #labels <- read.csv("../data/labels.csv", header = T)[rand_sample,1]
 #labels <- rep(labels, each=(1*rot+2))
+#save(imgs, labels, sizeImg, rot, n, file="../data/data1rotAugmentation.RData")
 
-#data <- test_train_sep(imgs, labels, 0.33333)
 data <- test_train_sep_dataaug(imgs, labels, 0.2, rot)
-train.x <- data[[1]] 
+train.x <- data[[1]]
 train.y <- data[[2]]
 test.x <- data[[3]]
 test.y <- data[[4]]
+remove(data) # save memory since useless
 
 # Deep Learning phase
 require(mxnet)
@@ -48,10 +49,10 @@ model <- mx.mlp(train.x, train.y, hidden_node=c(500,250,100,10), out_node=2, act
                 eval.metric=mx.metric.accuracy, dropout = 0.70, momentum = 0.7, initializer=mx.init.normal(1.5))
 
 accuracy_model(model, test.x,test.y)
-save(model, file="DNNbest.RData")
+save(model, file="../data/DNNbest.RData")
 
 # To predict new images:
-load("DNNbest.RData")
+load("../data/DNNbest.RData")
 preds = predict(model, test.x)
 pred.label = max.col(t(preds))-1
 print(table(pred.label, test.y))
@@ -106,10 +107,10 @@ device.cpu <- mx.cpu()
 mx.set.seed(2)
 tic <- proc.time()
 modelLeNet <- mx.model.FeedForward.create(lenet, X=train.array, y=train.y,
-                                     ctx=device.cpu, num.round=3, array.batch.size=200,
-                                     learning.rate=0.1, optimizer="adagrad",
-                                     eval.metric=mx.metric.accuracy, initializer=mx.init.uniform(1/sizeImg),
-                                     epoch.end.callback=mx.callback.log.train.metric(100))# wd=0.00001)
+                                          ctx=device.cpu, num.round=3, array.batch.size=200,
+                                          learning.rate=0.1, optimizer="adagrad",
+                                          eval.metric=mx.metric.accuracy, initializer=mx.init.uniform(1/sizeImg),
+                                          epoch.end.callback=mx.callback.log.train.metric(100))# wd=0.00001)
 
 
 accuracy_model(modelLeNet, test.array,test.y)
@@ -154,10 +155,10 @@ device.cpu <- mx.cpu()
 mx.set.seed(0)
 tic <- proc.time()
 modelCNN <- mx.model.FeedForward.create(output, X=train.array, y=train.y,
-                                          ctx=device.cpu, num.round=50, array.batch.size=250,
-                                          learning.rate=0.5, optimizer="adagrad",
-                                          eval.metric=mx.metric.accuracy, initializer=mx.init.uniform(1/sizeImg),
-                                          epoch.end.callback=mx.callback.log.train.metric(150))# wd=0.00001)
+                                        ctx=device.cpu, num.round=50, array.batch.size=250,
+                                        learning.rate=0.5, optimizer="adagrad",
+                                        eval.metric=mx.metric.accuracy, initializer=mx.init.uniform(1/sizeImg),
+                                        epoch.end.callback=mx.callback.log.train.metric(150))# wd=0.00001)
 accuracy_model(modelCNN, test.array,test.y)
 
 
@@ -207,8 +208,8 @@ testS.y <- dataSift[[4]]
 
 mx.set.seed(2)
 modelS <- mx.mlp(trainS.x, trainS.y, hidden_node=c(300,500,200,100), out_node=2, activation = "sigmoid", out_activation="softmax",
-                num.round=50, array.batch.size=50, learning.rate=0.1,
-                eval.metric=mx.metric.accuracy, dropout = 0.6, momentum = 0.7, initializer=mx.init.normal(1.5))
+                 num.round=50, array.batch.size=50, learning.rate=0.1,
+                 eval.metric=mx.metric.accuracy, dropout = 0.6, momentum = 0.7, initializer=mx.init.normal(1.5))
 
 accuracy_model(modelS, testS.x,testS.y)
 graph.viz(modelS$symbol)
@@ -242,8 +243,8 @@ testL.y <- dataLasso[[4]]
 
 mx.set.seed(2)
 modelL <- mx.mlp(trainL.x, trainL.y, hidden_node=c(1000,200,200,50), out_node=2, activation = "relu", out_activation="softmax",
-                num.round=100, array.batch.size=100, learning.rate=0.05,
-                eval.metric=mx.metric.accuracy, dropout = 0.4, momentum=0.7, initializer=mx.init.normal(0.05))
+                 num.round=100, array.batch.size=100, learning.rate=0.05,
+                 eval.metric=mx.metric.accuracy, dropout = 0.4, momentum=0.7, initializer=mx.init.normal(0.05))
 accuracy_model(modelL, testL.x,testL.y)
 
 ############## -> applied directly on lasso features

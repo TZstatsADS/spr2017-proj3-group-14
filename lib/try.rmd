@@ -1,10 +1,30 @@
----
-title: "try!!"
-author: "KE HAN kh2793"
-date: "March 22, 2017"
-output: html_document
----
-----
+Also to systematically solve the problem of overfitting:
+*(High dimensionality)
+
+
+1. (Variable selection)
+
+  1.1 (Best subset selection)
+  
+  1.2 (stepwise selection)
+  
+2. (Regularization)
+  
+  2.1 Ridge
+  
+  2.2 LASSO (see attached fig, rule out this method)
+  
+  2.3 SCAD
+  
+  2.4 elastic net
+
+3. (Dimension reduction techniques) (see attached fig, rule out this method)
+
+  3.1 (Principal component regression) 
+
+  3.2 (Factor analysis)
+  
+  3.3 (Partial least squares)
 
 
 
@@ -82,17 +102,3 @@ svm.model.few$accuracies
 
 
 
-Also to systematically solve the problem of overfitting:
-*(High dimensionality)
-1. (Variable selection)
-  1.1 (Best subset selection)
-  1.2 (stepwise selection)
-2. (Regularization)
-  2.1 Ridge
-  2.2 LASSO (see attached fig, rule out this method)
-  2.3 SCAD
-  2.4 elastic net
-3. (Dimension reduction techniques) (see attached fig, rule out this method)
-  3.1 (Principal component regression) 
-  3.2 (Factor analysis)
-  3.3 (Partial least squares)

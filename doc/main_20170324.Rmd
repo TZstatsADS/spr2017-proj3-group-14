@@ -1,0 +1,187 @@
+---
+title: "Project3: Chicken or Dogs?"
+author: "Group 14"
+date: "March 12, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r,warning=FALSE}
+# Import data
+source("http://bioconductor.org/biocLite.R")
+biocLite()
+biocLite("EBImage")
+
+# Import libraries
+if(!require("gbm")){
+  install.packages("gbm")
+}
+
+if(!require("data.table")){
+  install.packages("data.table")
+}
+
+library("gbm")
+library("data.table")
+
+source('../lib/cross_validation.R')
+source("../lib/train_GBM.R")
+#source("../lib/train_ADV.R")##Yi: need to be written, very important, uncomment it after you write it.
+
+library("EBImage")
+require(mxnet)
+source("../lib/annex.R")
+
+load("../data/data1rotAugmentation.RData")
+```
+
+### Summarize Running Time
+```{r}
+cat("Time for training model=", tm_GBM [1], "s \n")
+```
+
+
+###########################################Baseline Model: GBM#############################################
+###########################################################################################################
+###Step0: Set directories
+```{r}
+experiment_dir <- "../data/" # This will be modified for different data sets.
+```
+
+### Step 1: import training images class labels.
+```{r}
+#training data labels and sift features
+label_train <- read.table(paste(experiment_dir, "labels.csv", sep=""),
+                          header=T)
+label_train<-as.matrix(label_train)
+
+sift_features_train<-read.csv("../data/sift_features.csv") #training sift features
+sift_features_train<-t(sift_features_train)
+sift_features_train<-data.frame(sift_features_train)
+
+#test data labels and sift features
+#!very important, fill in the location of test labels file
+label_test<-read.table( ??) #need to be changed based on professor's data***
+label_test<-as.matrix(label_test)
+
+sift_features_test<-read.csv( ?? ) #training sift features
+sift_features_test<-t(sift_features_train)
+sift_features_test<-data.frame(sift_features_train)
+
+```
+
+###Step 2: Fit training data into GBM Model, which is our baseline model.
+
+Run Cross Validation on different shrinkage parameters, here we take parameters from 0.1 to 5 step 0.1
+
+```{r,warning=FALSE}
+shrinks<-seq(0.1, 0.5, 0.1)
+#record the test error for GBM with diffrent shrinkage parameters
+test_err_GBM = numeric(length(shrinks))
+for(i in 1:length(shrinks)){
+  cat("GBM model Cross Validation No.", i, "model out of",length(shrinks), "models", "\n")
+
+    paras = list(depth=1,
+             shrinkage=shrinks[i],
+             n.trees=100)
+
+  test_err_GBM[i] = cross_validation(sift_features_train, label_train, paras=paras, K=5, model='GBM')
+}
+```
+
+
+*Plot the test error
+```{r}
+plot(y=test_err_GBM,x=shrinks,xlab="shrinkages",ylab="CV Test Error",main="GBM CV Test Error",type="n")
+points(y=test_err_GBM,x=shrinks, col="blue", pch=16)
+lines(y=test_err_GBM,x=shrinks, col="blue")
+```
+
+
+* find the best shrinkage parameters and fit it into GBM Model
+```{r}
+best_shrink = shrinks[which.min(test_err_GBM)]
+paste("The best shrinkage parameter is",best_shrink)
+best_paras = list(depth=1, shrinkage=best_shrink, n.trees=100)
+```
+
+
+* train the model with the entire training set under best parameters
+```{r}
+tm_GBM<-NA
+tm_GBM <- system.time(GBM_fit<-train_GBM(x=sift_features_train, y=label_train, paras=best_paras))
+```
+
+###Step 3: fit test sift features into trained GBM model and predict the results. Then save prediction in output folder, both in csv and Rdata
+```{r}
+pred_GBM<-test(GBM_fit,sift_features_test)
+write.csv(pred_GBM,file="../output/GBM_prediction.csv")
+save(pred_GBM,file="../output/GBM_prediction.Rdata")
+pred_accuracy<-mean(pred_GBM==label_test)
+```
+
+########################################Advanced Model: DNN################################################
+###########################################################################################################
+###Step 0:recompile the data from raw images
+```{r}
+img_dir <- "../data/raw_images/" 
+set.seed(1)
+n <- 2000 # size of dataset 
+sizeImg <- 50 # size of final image (don't change! since model is trained on 50x50 images)
+rot <- 1 # number of rotation done for data augmentation in addition to symmetry
+n_files <- length(list.files(img_dir))
+rand_sample <- sample(1:n_files, n) # random sampling
+imgs <- matrixfy_imgs(img_dir, rand_sample, n, sizeImg, sizeImg, rot=rot)
+labels <- read.csv("../data/labels.csv", header = T)[rand_sample,1]
+labels <- rep(labels, each=(1*rot+2))
+
+##!!Yi: Following part might not be needed this afternoon, for we will have to use new test imgs for test.x,test.y
+data <- test_train_sep_dataaug(imgs, labels, 0.2, rot)
+train.x <- data[[1]]
+train.y <- data[[2]]
+test.x <- data[[3]]
+test.y <- data[[4]]
+remove(data) # save memory since useless
+```
+
+###Step 1:Training: Deep Learning architecture DNN
+##### Training accuracy of 80% and test accuracy 79.25%.
+##### Model is saved in DNNbest.RData and will be load as "model" if compile line 64 directly.
+```{r}
+mx.set.seed(2)
+model <- mx.mlp(train.x, train.y, hidden_node=c(500,250,100,50,20), out_node=2, activation = "sigmoid", out_activation="softmax",
+                num.round=200, array.batch.size=50, learning.rate=0.08,
+                eval.metric=mx.metric.accuracy, dropout = 0.9, momentum = 0.7, initializer=mx.init.normal(0.6))
+
+accuracy_model(model, test.x,test.y) # test accuracy
+save(model, file="../data/DNNbest.RData")
+```
+
+###Step 2: Testing: to predict new images
+```{r}
+### Load data
+img_test_dir <- "../data/raw_images/" # directory to load images from, Yi:might be new test data imgs folder
+n <- length(list.files(img_dir)) # size of dataset (to input)
+sizeImg <- 50 # size of final image (don't change! since model is trained on 50x50 images)
+
+images_test <- matrixfy_imgs(img_test_dir, 1:n, n, sizeImg, sizeImg, rot=0)
+labels_test <- read.csv("../data/labels.csv", header = T)[,1]
+
+### load model if not trained
+load("../data/DNNbest.RData")
+
+### Prediction and accuracy calculation
+preds = predict(model, images_test)
+pred.label = max.col(t(preds))-1
+accuracy_model(model, images_test, labels_test)
+save(pred.label,file="../output/DNN_prediction.Rdata")
+
+### Print model architecture (optional)
+graph.viz(model$symbol)
+```
+
+

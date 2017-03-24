@@ -118,6 +118,7 @@ tm_GBM <- system.time(GBM_fit<-train_GBM(x=sift_features_train, y=label_train, p
 
 ###Step 3: fit test sift features into trained GBM model and predict the results. Then save prediction in output folder, both in csv and Rdata
 ```{r}
+save(GBM_fit,file="../output/GBM_fit.Rdata") #if not retrain, can directly load trained GBM model from here
 pred_GBM<-test(GBM_fit,sift_features_test)
 write.csv(pred_GBM,file="../output/GBM_prediction.csv")
 save(pred_GBM,file="../output/GBM_prediction.Rdata")

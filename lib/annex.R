@@ -1,3 +1,4 @@
+# function to crop images to a ratio of 1:1 (square).
 crop_image_ratio11 <- function(img){
   w <- dim(img)[1]
   h <- dim(img)[2]
@@ -13,11 +14,10 @@ crop_image_ratio11 <- function(img){
   }
 }
 
-
 matrixfy_imgs <- function(img_dir, rand_sample, n=NA, width=100 ,height=100, rot=0){
   
   ### Convert images to matrices for training/testing images
-
+  
   ### Input: a directory that contains images ready for processing
   ### Output: a matrix where each row i represent the flatten image i reshaped to (width,height)
   
@@ -53,6 +53,7 @@ matrixfy_imgs <- function(img_dir, rand_sample, n=NA, width=100 ,height=100, rot
   return(dat)
 }
 
+# helper function for general matrixfy_imgs in order to proceed data augmentation
 data_aug.rotation <- function(img, times) { # implement also symetry
   angles <- seq(0,5,length.out = times+1)[1:times+1]
   res <- vector("list", times+2)
@@ -66,12 +67,14 @@ data_aug.rotation <- function(img, times) { # implement also symetry
   return(res)
 }
 
+# to visualize image once turned into a matrix row with matrixfy_imgs
 getImage <- function(imgs, index, width){
   img <- imgs[index,]
   dim(img) <- c(width,width)
   return(img)
 }
 
+# function to perform test&train set separation when no data augentation is involved
 test_train_sep <- function(data, labels, test_perc){
   # return a list with train,test sets
   n <- nrow(data)
@@ -80,6 +83,7 @@ test_train_sep <- function(data, labels, test_perc){
   return(list(data[-rand_sample,], labels[-rand_sample],data[rand_sample,], labels[rand_sample]))
 }
 
+# function to perform test&train set separation when data augentation is involved
 test_train_sep_dataaug <- function(data, labels, test_perc, rot){
   # return a list with train,test sets
   n <- nrow(data)/(1*rot+2)
@@ -89,6 +93,7 @@ test_train_sep_dataaug <- function(data, labels, test_perc, rot){
   return(list(data[-s,], labels[-s],data[s,], labels[s]))
 }
 
+# compute test accuracy of a mx.net model
 accuracy_model <- function(model, test.x, test.y){
   preds = predict(model, test.x)
   pred.label = max.col(t(preds))-1

@@ -1,33 +1,34 @@
+# original code: Virgile Mison in Group14 for project 3
+
 # Import data
 source("http://bioconductor.org/biocLite.R")
 biocLite()
 biocLite("EBImage")
 
-# Pre-process of images
-
+# 1. Import libraries
 library("EBImage")
-img_dir <- "../data/raw_images/"
+require(mxnet)
 source("../lib/annex.R")
 
+# 2. Load images or re-compile them from dataset for training/testing
+
+### 2.1 load data to imgs with RData (fastest if possible), include 1 rotation data augmentation
+load("data1rotAugmentation.RData")
+
+### 2.2 recompile the data from raw images if needed (slowest, to avoid)
+img_dir <- "../data/raw_images/" #(think about having raw_images folder in data/)
 set.seed(1)
-# display(getImage(imgs,10,40))  # to show example image from the matrix imgs
+n <- 2000 # size of dataset 
+sizeImg <- 50 # size of final image (don't change! since model is trained on 50x50 images)
+rot <- 1 # number of rotation done for data augmentation in addition to symmetry
+n_files <- length(list.files(img_dir))
+rand_sample <- sample(1:n_files, n) # random sampling
+imgs <- matrixfy_imgs(img_dir, rand_sample, n, sizeImg, sizeImg, rot=rot)
+labels <- read.csv("../data/labels.csv", header = T)[rand_sample,1]
+labels <- rep(labels, each=(1*rot+2))
+#save(imgs, labels, sizeImg, rot, n, file="../data/savedata.RData") #to save if needeed
 
-### Load images or re-compile them ###
-
-## load data to imgs
-load("../data/data1rotAugmentation.RData")
-
-## only if recompile the data from raw images
-#n <- 2000
-#sizeImg <- 50
-#rot <- 1
-#n_files <- length(list.files(img_dir))
-#rand_sample <- sample(1:n_files, n)
-#imgs <- matrixfy_imgs(img_dir, rand_sample, n, sizeImg, sizeImg, rot=rot)
-#labels <- read.csv("../data/labels.csv", header = T)[rand_sample,1]
-#labels <- rep(labels, each=(1*rot+2))
-#save(imgs, labels, sizeImg, rot, n, file="../data/data1rotAugmentation.RData")
-
+### 2.3 split between train and test set
 data <- test_train_sep_dataaug(imgs, labels, 0.2, rot)
 train.x <- data[[1]]
 train.y <- data[[2]]
@@ -35,34 +36,45 @@ test.x <- data[[3]]
 test.y <- data[[4]]
 remove(data) # save memory since useless
 
-# Deep Learning phase
-require(mxnet)
+# 3. Training: Deep Learning architecture DNN (not required if just want to use our own pre-trained model)
 
-# The only model that gives really good result.
-# Training accuracy of 84.56% and test accuracy 77.42%.
-# Model is saved in DNNbest.RData and will be load as "model" if compile line 52 directly.
+##### The only model that gives really good result.
+##### Training accuracy of 80% and test accuracy 79.25%.
+##### Model is saved in DNNbest.RData and will be load as "model" if compile line 64 directly.
 
-# To retrain the model:
+##### To retrain the model:
 mx.set.seed(2)
-model <- mx.mlp(train.x, train.y, hidden_node=c(500,250,100,10), out_node=2, activation = "sigmoid", out_activation="softmax",
-                num.round=750, array.batch.size=150, learning.rate=0.3,
-                eval.metric=mx.metric.accuracy, dropout = 0.70, momentum = 0.7, initializer=mx.init.normal(1.5))
+model <- mx.mlp(train.x, train.y, hidden_node=c(500,250,100,50,20), out_node=2, activation = "sigmoid", out_activation="softmax",
+                num.round=200, array.batch.size=50, learning.rate=0.08,
+                eval.metric=mx.metric.accuracy, dropout = 0.9, momentum = 0.7, initializer=mx.init.normal(0.6))
 
-accuracy_model(model, test.x,test.y)
+accuracy_model(model, test.x,test.y) # test accuracy
 save(model, file="../data/DNNbest.RData")
 
-# To predict new images:
-load("../data/DNNbest.RData")
-preds = predict(model, test.x)
-pred.label = max.col(t(preds))-1
-print(table(pred.label, test.y))
 
-#################################################################################################################
-# 77.41% model saved (but overfit to 99% in training accuracy) -> might try to improve it but delete it after   #
-#################################################################################################################
-#model <- mx.mlp(train.x, train.y, hidden_node=c(300,200,50), out_node=2, activation = "sigmoid", out_activation="softmax",
-#                num.round=700, array.batch.size=150, learning.rate=0.15,
-#                eval.metric=mx.metric.accuracy, dropout = 0.7, momentum = 0.7, initializer=mx.init.normal(1.5))
+# 4. Testing: to predict new images
+### 4.1 Load data
+img_test_dir <- "../data/raw_images/" # directory to load images from
+n <- length(list.files(img_dir)) # size of dataset (to input)
+sizeImg <- 50 # size of final image (don't change! since model is trained on 50x50 images)
+
+images_test <- matrixfy_imgs(img_test_dir, 1:n, n, sizeImg, sizeImg, rot=0)
+labels_test <- read.csv("../data/labels.csv", header = T)[,1]
+
+### 4.2 load model if not trained
+load("../data/DNNbest.RData")
+
+### 4.3 Prediction and accuracy calculation
+preds = predict(model, images_test)
+pred.label = max.col(t(preds))-1
+accuracy_model(model, images_test, labels_test)
+
+### 4.4 Print model architecture (optional)
+graph.viz(model$symbol)
+
+##########              ##########                  ##########
+## All the following involves test that were not concluant  ##
+##########              ##########                  ##########
 
 
 ########################################
@@ -212,7 +224,6 @@ modelS <- mx.mlp(trainS.x, trainS.y, hidden_node=c(300,500,200,100), out_node=2,
                  eval.metric=mx.metric.accuracy, dropout = 0.6, momentum = 0.7, initializer=mx.init.normal(1.5))
 
 accuracy_model(modelS, testS.x,testS.y)
-graph.viz(modelS$symbol)
 
 ############## -> applied directly on sift features
 ##  t-SNE  ### -> separation of classes does not occur. The decorrelation does not work.

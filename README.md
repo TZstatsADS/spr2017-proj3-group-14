@@ -13,13 +13,13 @@ Term: Spring 2017
 	+ Pan, Yijia yp2424@columbia.edu
 	+ Xiang, Yi yx2365@columbia.edu
 
-+ Project summary: In this project, we try to propose a feasible improvement on the currant classification engine to classify poodle dogs and fried chicken in terms of running cost (storage, memory and time) and prediction accuracy. The baseline model uses gradient boosting machine (gbm) on 5000 SIFT features. Our advanced model uses CNN and deep learning method which enhance the accuracy rate by 7%.
++ Project summary: In this project, we try to propose a feasible improvement on the currant classification engine to classify poodle dogs and fried chicken in terms of running cost (storage, memory and time) and prediction accuracy. The baseline model uses gradient boosting machine (gbm) on 5000 SIFT features. Our advanced model uses DNN and deep learning method which enhance the accuracy rate by 7%.
 
-+ Image processing and features extraction: Baseline model using orignial 5000 SIFT features. Advanced model uses CNN and deap learning methods to extract the features and classify them.
++ Image processing and features extraction: Baseline model using orignial 5000 SIFT features. Advanced model uses DNN and deap learning methods to extract the features and classify them.
 
-+ Classification methods: Baseline model uses gbm method. Advance model uses CNN and deap learning. 
++ Classification methods: Baseline model uses gbm method. Advance model uses DNN and deap learning. 
 
-+ Model evaluation and comparison: First, the baseline model uses gradient boosting machine (gbm) on 5000 SIFT features. Second, we tried to choosing 5000 SIFT features using LASSO method. Then using several machine learning methods including random forest, knn, xgboost, logistic regression, svm to classify these images. However we didn't get a good result. At last, our advanced model uses CNN and deep learning method which enhance the accuracy rate by 7%.
++ Model evaluation and comparison: First, the baseline model uses gradient boosting machine (gbm) on 5000 SIFT features. Second, we tried to choosing 5000 SIFT features using LASSO method. Then using several machine learning methods including random forest, knn, xgboost, logistic regression, svm to classify these images. However we didn't get a good result. At last, our advanced model uses DNN and deep learning method which enhance the accuracy rate by 7%.
 
 ![image](figs/results.png)
 

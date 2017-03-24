@@ -21,7 +21,7 @@ Term: Spring 2017
 
 + Model evaluation and comparison: First, the baseline model uses gradient boosting machine (gbm) on 5000 SIFT features. Second, we tried to choosing 5000 SIFT features using LASSO method. Then using several machine learning methods including random forest, knn, xgboost, logistic regression, svm to classify these images. However we didn't get a good result. At last, our advanced model uses CNN and deep learning method which enhance the accuracy rate by 7%.
 
-![image](output/Screen Shot 2017-03-23 at 10.34.35 PM.png)
+![image] (spr2017-proj3-group-14/output/Screen Shot 2017-03-23 at 10.34.35 PM.png )
 
 **Contribution statement**: ([default](doc/a_note_on_contributions.md)) All team members contributed equally in all stages of this project. All team members approve our work presented in this GitHub repository including this contributions statement. 
 

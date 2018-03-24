@@ -6,12 +6,6 @@
 Term: Spring 2017
 
 + Team # 14
-+ Team members
-	+ Han, Ke kh2793@columbia.edu
-	+ Li, Mengchen ml3890@columbia.edu
-	+ Mison, Virgile vcm2114@columbia.edu
-	+ Pan, Yijia yp2424@columbia.edu
-	+ Xiang, Yi yx2365@columbia.edu
 
 + Project summary: In this project, we try to propose a feasible improvement on the currant classification engine to classify poodle dogs and fried chicken in terms of running cost (storage, memory and time) and prediction accuracy. The baseline model uses gradient boosting machine (gbm) on 5000 SIFT features. Our advanced model uses DNN and deep learning method which enhance the accuracy rate by 7%.
 
